@@ -1,5 +1,7 @@
 # Light Music Player
 
+[中文](./README.md) | English
+
 This project is a music-and-light visualization demo program based on the **Quectel Pi H1 Smart Single-Board Computer**. 
 By playing local music files and performing real-time audio analysis, it drives a **16×16 WS2812 RGB LED matrix** to display lighting effects that change in sync with the music rhythm. 
 Implemented in Python, the project uses the SPI interface to emulate WS2812 timing, enabling stable LED panel driving on Linux without an additional MCU.
