@@ -22,7 +22,7 @@ from array import array
 
 MUSIC_DIR = "/home/pi/Music"
 
-SPI_BUS = 10
+SPI_BUS = 1
 SPI_DEV = 0
 SPI_SPEED_HZ = 3200000
 BRIGHTNESS = 0.30
@@ -210,6 +210,18 @@ class AudioState:
     level_slow: float = 0.0
     track_name: str = ""
     bands: tuple = None
+
+
+def _pulse_env():
+    # When launched via sudo, root has no PulseAudio/PipeWire session of its own;
+    # point pacat at the invoking (SUDO_UID) user's socket so audio actually plays.
+    env = dict(os.environ)
+    sudo_uid = env.get("SUDO_UID")
+    if sudo_uid and os.geteuid() == 0:
+        runtime_dir = f"/run/user/{sudo_uid}"
+        env["XDG_RUNTIME_DIR"] = runtime_dir
+        env["PULSE_SERVER"] = f"unix:{runtime_dir}/pulse/native"
+    return env
 
 
 def _kill_process_group(p: subprocess.Popen):
@@ -401,7 +413,7 @@ class MusicPlayer(threading.Thread):
 
         try:
             ff = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0, start_new_session=True)
-            pa = subprocess.Popen(pacat_cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, bufsize=0, start_new_session=True)
+            pa = subprocess.Popen(pacat_cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, bufsize=0, start_new_session=True, env=_pulse_env())
 
             bytes_per_frame = 2 * self.channels
             chunk_frames = 1024
